@@ -27,8 +27,8 @@ def student_factory():
 @pytest.mark.django_db
 def test_get_course(client, course_factory, student_factory):
     bob_the_tester = student_factory(name='Bob')
-    course_factory(name='Testology', students=[bob_the_tester])
-    response = client.get('/courses/1/')
+    course = course_factory(name='Testology', students=[bob_the_tester])
+    response = client.get(f'/courses/{course.id}/')
     assert response.status_code == 200
 
 
@@ -47,23 +47,24 @@ def test_get_course_list(client, course_factory):
 
 # проверка фильтрации списка курсов по id
 @pytest.mark.django_db
-def test_get_course_list(client, course_factory):
+def test_filter_id(client, course_factory):
     COURSE_SUM = 10
     course_factory(_quantity=COURSE_SUM)
 
     # проверка запроса по id всех курсов
     for i in range(COURSE_SUM):
-        response = client.get(f"/courses/?id={i+1}")
+        response = client.get('/courses/', data={'id': i+1})
         assert response.status_code == 200
 
     # проверка одного курса с произвольным id
-    response = client.get("/courses/?id=5")
+    # response = client.get("/courses/?id=5")
+    response = client.get('/courses/', data={'id': 5})
     assert response.status_code == 200
 
 
 # проверка фильтрации списка курсов по name
 @pytest.mark.django_db
-def test_get_course_list(client, course_factory):
+def test_filter_name(client, course_factory):
     COURSE_SUM = 10
     courses = course_factory(_quantity=COURSE_SUM)
     response = client.get(f"/courses/?name={courses[9].name}")
@@ -88,11 +89,11 @@ def test_post_course(client):
 def test_update_course(client, course_factory, student_factory):
     STUDENTS_SUM = 5
     students_group = student_factory(_quantity=STUDENTS_SUM)
-    course_factory(name='Testology', students=[students_group[0], students_group[1]])
-    response = client.get('/courses/1/')
+    course = course_factory(name='Testology', students=[students_group[0], students_group[1]])
+    response = client.get(f'/courses/{course.id}/')
     assert response.status_code == 200
 
-    response = client.patch('/courses/1/', data={'students': [2, 4]}, format='json')
+    response = client.patch(f'/courses/{course.id}/', data={'students': [2, 4]}, format='json')
     assert response.status_code == 200
 
 
@@ -100,12 +101,12 @@ def test_update_course(client, course_factory, student_factory):
 @pytest.mark.django_db
 def test_delete_course(client, course_factory, student_factory):
     bob_the_tester = student_factory(name='Bob')
-    course_factory(name='Testology', students=[bob_the_tester])
-    response = client.get('/courses/1/')
+    course = course_factory(name='Testology', students=[bob_the_tester])
+    response = client.get(f'/courses/{course.id}/')
     assert response.status_code == 200
 
-    response = client.delete('/courses/1/')
+    response = client.delete(f'/courses/{course.id}/')
     assert response.status_code == 204
 
-    response = client.get('/courses/1/')
+    response = client.get(f'/courses/{course.id}/')
     assert response.status_code == 404
